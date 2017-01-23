@@ -16,3 +16,13 @@ Required tools:
 
 Important documentation:
  - Roomba specification document: http://www.irobot.lv/uploaded_files/File/iRobot_Roomba_500_Open_Interface_Spec.pdf
+
+Hardware integration inside i-robot Roomba:
+ - All modifications have been made with the main objective of maintaining the outer appearance of the robot as original as possible but facilitating interaction with the new hardware.
+ - Disposition of the hardware inside the vacuum cleaner.
+ ![Hardware location](images/hardware.jpg "Hardware location inside vacuum")
+ - Detail of new usb port to connect with ESP8266.
+ ![USB port detail](images/usbPort.jpg "USB port detail")
+ - Detail of ESP8266 with usb cable connected and stick to push reset button on ESP8266 board. 
+ ![Reset button detail](images/resetButtonDetail.jpg "Reset button detail")
+
