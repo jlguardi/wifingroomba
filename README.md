@@ -25,4 +25,7 @@ Hardware integration inside i-robot Roomba:
  ![USB port detail](images/usbPort.jpg "USB port detail")
  - Detail of ESP8266 with usb cable connected and stick to push reset button on ESP8266 board. 
  ![Reset button detail](images/resetButtonDetail.jpg "Reset button detail")
-
+ - Cenital view with final ubication of ESP8266 and wires.
+ ![Cenital view](images/cenitalView.jpg "Cenital view")
+ - Really has been modded?
+ ![Really has been modded?](images/allTogether.jpg "Really has been modded?")
