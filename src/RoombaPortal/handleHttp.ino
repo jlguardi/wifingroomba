@@ -17,10 +17,9 @@ void handleRoot() {
   } else {
     server.sendContent(String("<p>You are connected through the wifi network: ") + ssid + "</p>");
   }
-  server.sendContent(
-    "<p>You may want to <a href='/wifi'>config the wifi connection</a>.</p>"
-    "</body></html>"
-  );
+  server.sendContent("<p>You may want to <a href='/wifi'>config the wifi connection</a>.</p>");
+  server.sendContent(String("<p>Version ") + compile_date + String("</p>"));
+  server.sendContent("</body></html>");
   server.client().stop(); // Stop is needed because we sent no content length
 }
 
@@ -29,7 +28,14 @@ boolean captivePortal() {
   if (!isIp(server.hostHeader()) && server.hostHeader() != (String(myHostname)+".local")) {
     Serial.print("Request redirected to captive portal");
     server.sendHeader("Location", String("http://") + toStringIp(server.client().localIP()), true);
-    server.send ( 302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    server.send ( 302, "text/html", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    server.sendContent(
+      "<html><head></head><body>"
+      "<h1>HELLO WORLD!!</h1>"
+    );
+    server.sendContent("<p>You may want to <a href='/wifi'>config the wifi connection</a>.</p>");
+    server.sendContent(String("<p>Version ") + compile_date + String("</p>"));
+    server.sendContent("</body></html>");
     server.client().stop(); // Stop is needed because we sent no content length
     return true;
   }
@@ -87,6 +93,7 @@ void handleWifi() {
     "<br /><input type='password' placeholder='password' name='p'/>"
     "<br /><input type='submit' value='Connect/Disconnect'/></form>"
     "<p>You may want to <a href='/'>return to the home page</a>.</p>"
+    "<p>Version " + String(compile_date) + "</p>"
     "</body></html>"
   );
   server.client().stop(); // Stop is needed because we sent no content length
@@ -101,7 +108,13 @@ void handleWifiSave() {
   server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   server.sendHeader("Pragma", "no-cache");
   server.sendHeader("Expires", "-1");
-  server.send ( 302, "text/plain", "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  server.send ( 302, "text/html", "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  server.sendContent(
+    "<html><head></head><body>"
+    "<h1>Wifi save</h1>"
+  );
+  server.sendContent(String("<p>Version ") + String(compile_date) + String("</p>"));
+  server.sendContent("</body></html>");
   server.client().stop(); // Stop is needed because we sent no content length
   saveCredentials();
   connect = strlen(ssid) > 0; // Request WLAN connect with new credentials if there is a SSID
@@ -147,16 +160,29 @@ void handleUpdate() {
     }
     server.sendContent(
       "<p>Use this form to update the firmware.</p>"
-      "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>"
-      "</body></html>"
-    );
+      "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>");
+    server.sendContent(String("<p>Version ") + String(compile_date) + String("</p>"));
+    server.sendContent("</body></html>");
     server.client().stop(); // Stop is needed because we sent no content length
     
   } else if (server.method() == HTTP_POST) {
     server.sendHeader("Connection", "close");
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, "text/plain", (Update.hasError())?"FAIL":"OK");
-    //ESP.restart();
+    server.send(200, "text/html", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    server.sendContent(
+      "<html><head></head><body>"
+      "<h1>Update firmware page</h1>"
+    );
+    if (Update.hasError()) {
+      server.sendContent(String("<p>Error on update process.</p>"));
+    } else {
+      server.sendContent(String("<p>Update successful.</p>"));
+    }
+    server.sendContent(String("<p>Version ") + String(compile_date) + String("</p>"));
+    server.sendContent("</body></html>");
+    server.client().stop(); // Stop is needed because we sent no content length
+    
+    ESP.restart();
   }
 }
 
@@ -192,4 +218,58 @@ void handleFileUpload() {
     Serial.print("handleFileUpload Size: ");
     Serial.println(upload.totalSize);
   }
+}
+
+
+void handleAPI() {
+  server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  server.sendHeader("Pragma", "no-cache");
+  server.sendHeader("Expires", "-1");
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.send(200, "text/html", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
+  server.sendContent(
+    "<html><head></head><body>"
+    "<h1>API</h1>"
+  );
+  if (server.client().localIP() == apIP) {
+    server.sendContent(String("<p>You are connected through the soft AP: ") + softAP_ssid + "</p>");
+  } else {
+    server.sendContent(String("<p>You are connected through the wifi network: ") + ssid + "</p>");
+  }
+  server.sendContent(
+    "\r\n<br />"
+  );
+  digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage HIGH
+  delay(1000);   
+  digitalWrite(BUILTIN_LED, HIGH);  // turn on LED with voltage HIGH
+  delay(1000);   
+  digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage HIGH
+  delay(1000);   
+  float pos = 1024 * (1 - server.arg("pwr").toFloat()/100.0);
+  digitalWrite(BUILTIN_LED, LOW);  // turn on LED with voltage HIGH
+  delay(1000);                      // wait one second
+  analogWrite(BUILTIN_LED, pos);
+  if(server.arg("on") == "1"){
+//    SCIwakeUp();
+//    SCIon();
+    //SCIclean();
+    //SCIspinLeft();
+  }
+  if(server.arg("on") == "0"){
+//    SCIsleep();
+  }
+  if(server.arg("led") == "1"){
+    roomba.leds(ROOMBA_MASK_LED_PLAY, 0, 255);
+  }
+  if (server.arg("led")== "0"){
+      roomba.leds(ROOMBA_MASK_LED_PLAY, 0, 0);
+  }
+  server.sendContent(String("<p>PWR: ") + analogRead(BUILTIN_LED) + "%</p>");
+  server.sendContent(String("<p>Status: ") + digitalRead(DD) + "</p>");
+  server.sendContent(
+    "\r\n<br />"
+    "<p>Version " + String(compile_date) + "</p>"
+    "</body></html>"
+  );
+  server.client().stop(); // Stop is needed because we sent no content length
 }
