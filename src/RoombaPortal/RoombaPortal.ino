@@ -4,7 +4,7 @@
 #include <DNSServer.h>
 #include <ESP8266mDNS.h>
 #include <EEPROM.h>
-
+#include <Roomba.h>
 /*
  * This example serves a "hello world" on a WLAN and a SoftAP at the same time.
  * The SoftAP allow you to configure WLAN parameters at run time. They are not setup in the sketch but saved on EEPROM.
@@ -16,6 +16,15 @@
  * 
  * This is a captive portal because through the softAP it will redirect any http request to http://192.168.4.1/
  */
+
+#define TX D1
+#define RX D2
+#define DD D3
+
+SoftwareSerial SCISerial(RX,TX);
+Roomba roomba(&SCISerial, Roomba::Baud115200);
+
+const char compile_date[] = __DATE__ " " __TIME__;
 
 /* Set these to your desired softAP credentials. They are not configurable at runtime */
 const char *softAP_ssid = "ESP_ap";
@@ -51,10 +60,12 @@ int status = WL_IDLE_STATUS;
 
 void setup() {
   delay(1000);
+  pinMode(DD, OUTPUT);
+  digitalWrite(DD, HIGH);
   /* switch on led */
   pinMode(BUILTIN_LED, OUTPUT);
-  digitalWrite(BUILTIN_LED, LOW); 
-  for (int i=0;i<3;i++) {
+  digitalWrite(BUILTIN_LED, LOW);
+  for (int i=0;i<30;i++) {
     analogWrite(BUILTIN_LED,(i*100) % 1001);
     delay(50);
   }
@@ -76,6 +87,7 @@ void setup() {
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors, update firmware and not found. */
   server.on("/", handleRoot);
+  server.on("/api", handleAPI);
   server.on("/wifi", handleWifi);
   server.on("/wifisave", handleWifiSave);
   server.on("/update",handleUpdate);
@@ -142,4 +154,18 @@ void loop() {
   dnsServer.processNextRequest();
   //HTTP
   server.handleClient();
+  // Roomba
+  roomba.start();
+  roomba.safeMode();
+  // Leds
+  roomba.leds(ROOMBA_MASK_LED_PLAY, 255, 255);
+  delay(1000);
+  roomba.leds(ROOMBA_MASK_LED_PLAY, 0, 0);
+  delay(1000);
+  roomba.leds(ROOMBA_MASK_LED_PLAY, 255, 255);
+  delay(1000);
+  roomba.leds(ROOMBA_MASK_LED_PLAY, 0, 0);
+  roomba.power();
+  //Google Calendar
+  getGoogleCalendarEventsSync();
 }
