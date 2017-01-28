@@ -25,5 +25,4 @@ void saveCredentials() {
   EEPROM.commit();
   EEPROM.end();
 }
-Contact GitHub API Training Shop Blog About
 
